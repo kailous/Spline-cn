@@ -1,11 +1,24 @@
 const { ipcRenderer } = require('electron');
-ipcRenderer.on('apply-localization', (event) => {
-    applyLocalization();
+
+// 监听来自主进程的语言切换事件
+ipcRenderer.on('change-language', (event, language) => {
+    if (language === 'english') {
+        // 实现英文界面的逻辑
+        applyEnglishLocalization();
+    } else if (language === 'chinese') {
+        // 实现中文界面的逻辑
+        applyChineseLocalization();
+    }
 });
 
-// 汉化逻辑封装在一个函数中
-function applyLocalization() {
-    console.log("中文选项被点击");
+function applyEnglishLocalization() {
+    // 在这里添加英文本地化的代码
+    console.log('切换到英文界面');
+}
+
+function applyChineseLocalization() {
+    // 在这里添加中文本地化的代码
+    console.log('切换到中文界面');
     var script = document.createElement("script");
     var header = document.getElementsByTagName("head")[0];
     header.appendChild(script);
@@ -16,16 +29,3 @@ function applyLocalization() {
     };
     var myNotification = new window.Notification(option.title, option);
 }
-
-
-
-// 监听来自主进程的语言切换事件
-ipcRenderer.on('change-language', (event, language) => {
-    if (language === 'english') {
-        // 输出语言切换事件
-        console.log('change-language', language);
-    } else {
-        // 输出语言切换事件
-        console.log('change-language', language);
-    }
-});
