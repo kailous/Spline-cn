@@ -64,7 +64,7 @@ function createMenu() {
             ],
         });
     }
-
+    module.exports.createMenu = createMenu;
     const menu = Menu.buildFromTemplate(template);
     Menu.setApplicationMenu(menu);
 }

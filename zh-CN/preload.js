@@ -1,7 +1,11 @@
 const { ipcRenderer } = require('electron');
+ipcRenderer.on('apply-localization', (event) => {
+    applyLocalization();
+});
 
 // 汉化逻辑封装在一个函数中
 function applyLocalization() {
+    console.log("中文选项被点击");
     var script = document.createElement("script");
     var header = document.getElementsByTagName("head")[0];
     header.appendChild(script);
