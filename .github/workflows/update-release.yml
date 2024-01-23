@@ -11,6 +11,10 @@ jobs:
     steps:
     - name: Check out code
       uses: actions/checkout@v2
+    # 打包app文件夹为app.zip
+    - name: Zip the app folder
+      run: zip -r app.zip app
+
 
     # 提取package.json中的版本号
     - name: Get version from package.json
