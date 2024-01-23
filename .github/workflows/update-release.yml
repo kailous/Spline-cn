@@ -20,3 +20,5 @@ jobs:
     - name: Get version from package.json
       id: package_version
       run: echo "::set-output name=version::$(jq -r .version app/package.json)"
+
+    
