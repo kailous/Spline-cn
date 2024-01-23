@@ -36,7 +36,7 @@ jobs:
       uses: actions/upload-release-asset@v1
       if: steps.check_tag.outputs.exists == 'true'
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
       with:
         upload_url: https://uploads.github.com/repos/username/repo/releases/tags/v${{ steps.package_version.outputs.version }}
         asset_path: ./app.zip
@@ -48,7 +48,7 @@ jobs:
       uses: actions/upload-release-asset@v1
       if: steps.check_tag.outputs.exists == 'false'
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
       with:
         upload_url: https://uploads.github.com/repos/username/repo/releases
         asset_path: ./app.zip
