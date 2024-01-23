@@ -1,0 +1,16 @@
+{
+  "name": "Spline",
+  "private": true,
+  "version": "0.11.0",
+  "author": "Spline <hello@spline.design>",
+  "homepage": "https://spline.design",
+  "main": "zh-CN/main.js",
+  "lint-staged": {
+    "*.{js,css,md}": "prettier --write"
+  },
+  "dependencies": {
+    "electron-log": "^4.4.8",
+    "electron-updater": "^6.1.1",
+    "lodash.clonedeep": "^4.5.0"
+  }
+}
