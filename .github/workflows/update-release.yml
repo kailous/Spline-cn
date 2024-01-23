@@ -1,0 +1,72 @@
+name: Release Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    # 提取package.json中的版本号
+    - name: Get version from package.json
+      id: package_version
+      run: echo "::set-output name=version::$(jq -r .version app/package.json)"
+
+    # 检查标签是否存在
+    - name: Check if tag exists
+      id: check_tag
+      run: |
+        if git rev-parse refs/tags/v${{ steps.package_version.outputs.version }} >/dev/null 2>&1; then
+          echo "::set-output name=exists::true"
+        else
+          echo "::set-output name=exists::false"
+        fi
+
+    # 打包app文件夹
+    - name: Zip the app folder
+      run: zip -r app.zip app
+
+    # 如果标签不存在，创建新标签
+    - name: Create and push new tag
+      if: steps.check_tag.outputs.exists == 'false'
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git tag v${{ steps.package_version.outputs.version }}
+        git push origin v${{ steps.package_version.outputs.version }}
+
+    # 如果标签不存在，创建新发布
+    - name: Create GitHub Release
+      if: steps.check_tag.outputs.exists == 'false'
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.package_version.outputs.version }}
+        release_name: Release v${{ steps.package_version.outputs.version }}
+        draft: false
+        prerelease: false
+
+    # 如果标签存在，更新现有发布
+    - name: Update GitHub Release
+      if: steps.check_tag.outputs.exists == 'true'
+      run: |
+        bash .github/workflows/update-release.sh
+
+    # 上传ZIP文件到发布
+    - name: Upload ZIP to Release
+      uses: actions/upload-release-asset@v1
+      if: steps.check_tag.outputs.exists == 'true'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./app.zip
+        asset_name: app.zip
+        asset_content_type: application/zip
