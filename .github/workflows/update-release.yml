@@ -45,6 +45,8 @@ jobs:
     - name: Update existing tag
       if: steps.check_tag.outputs.exists == 'true'
       run: |
+        git tag -d v${{ steps.package_version.outputs.version }}
+        git push origin :refs/tags/v${{ steps.package_version.outputs.version }}
         git config --local user.email "
         git config --local user.name "
         git tag -f v${{ steps.package_version.outputs.version }}
