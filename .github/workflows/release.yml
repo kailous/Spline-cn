@@ -1,4 +1,4 @@
-name: 自动发布版本
+name: Automatic Release with ZIP
 
 on:
   push:
@@ -12,7 +12,8 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v2
 
-    - name: 获取最新的标签
+    # 获取最新的标签
+    - name: Get latest tag
       id: get-latest-tag
       run: |
         git fetch --tags
@@ -20,7 +21,8 @@ jobs:
         echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
         echo "::set-output name=tag::$LATEST_TAG"
 
-    - name: 计算新版本号
+    # 计算新版本号
+    - name: Calculate new version
       id: new-version
       run: |
         LATEST_TAG=${{ steps.get-latest-tag.outputs.tag }}
@@ -36,14 +38,20 @@ jobs:
         echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
         echo "::set-output name=new_version::$NEW_VERSION"
 
-    - name: 创建新标签
+    # 创建新标签
+    - name: Create and push new tag
       run: |
         git config user.name github-actions
         git config user.email github-actions@github.com
         git tag ${{ env.NEW_VERSION }}
         git push origin ${{ env.NEW_VERSION }}
 
-    - name: 创建新的GitHub发布
+    # 打包zh-CN文件夹
+    - name: Zip the zh-CN folder
+      run: zip -r zh-CN.zip zh-CN
+
+    # 创建新的GitHub发布
+    - name: Create GitHub Release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -52,3 +60,14 @@ jobs:
         release_name: Release ${{ env.NEW_VERSION }}
         draft: false
         prerelease: false
+
+    # 上传ZIP文件到发布
+    - name: Upload ZIP to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./zh-CN.zip
+        asset_name: zh-CN.zip
+        asset_content_type: application/zip
