@@ -52,6 +52,7 @@ jobs:
 
     # 创建新的GitHub发布
     - name: Create GitHub Release
+      id: create_release  # 添加这个ID以引用步骤的输出
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -67,7 +68,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        upload_url: ${{ steps.create_release.outputs.upload_url }}  # 使用create_release步骤的输出
         asset_path: ./zh-CN.zip
         asset_name: zh-CN.zip
         asset_content_type: application/zip
+
