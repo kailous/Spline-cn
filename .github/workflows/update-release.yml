@@ -30,11 +30,16 @@ jobs:
         else
           echo "::set-output name=exists::false"
         fi
+
+    # 设置环境变量GH_TOKEN
+    - name: Set up GitHub CLI
+      run: echo "GH_TOKEN=${{ secrets.GIT_TOKEN }}" >> $GITHUB_ENV
     
-    # 如果标签不存在，上传app.zip到新标签
+      # 如果标签不存在，上传app.zip到新标签
     - name: Create new tag
       if: steps.check_tag.outputs.exists == 'false'
       run: |
+        gh auth login --with-token <<< $GH_TOKEN
         git config --local user.email "
         git config --local user.name "
         git tag v${{ steps.package_version.outputs.version }}
@@ -45,6 +50,7 @@ jobs:
     - name: Update existing tag
       if: steps.check_tag.outputs.exists == 'true'
       run: |
+        gh auth login --with-token <<< $GH_TOKEN
         git tag -d v${{ steps.package_version.outputs.version }}
         git push origin :refs/tags/v${{ steps.package_version.outputs.version }}
         git config --local user.email "
