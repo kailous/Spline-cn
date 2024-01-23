@@ -112,8 +112,10 @@ backup() {
         mkdir "$Backup"
     fi
     line
+
     # 备份 app.asar 原始文件
     backup_asar
+
     line
 }
 
@@ -192,6 +194,7 @@ download_file() {
 
 welcome
 backup
+backup_asar
 download_url
 download_file
 MacOS_restart
