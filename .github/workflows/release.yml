@@ -1,4 +1,4 @@
-name: 自动发布资源包
+name: 自动发布版本
 
 on:
   push:
@@ -6,31 +6,49 @@ on:
       - main
 
 jobs:
-  build-and-release:
+  release:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - name: Check out code
+      uses: actions/checkout@v2
 
-    - name: Zip the folder
-      run: zip -r app.zip zh-CN
-    
-    - name: Create Release
-      id: create_release
+    - name: 获取最新的标签
+      id: get-latest-tag
+      run: |
+        git fetch --tags
+        LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+        echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+        echo "::set-output name=tag::$LATEST_TAG"
+
+    - name: 计算新版本号
+      id: new-version
+      run: |
+        LATEST_TAG=${{ steps.get-latest-tag.outputs.tag }}
+        BASE_VERSION=${LATEST_TAG:1}  # Remove 'v' prefix
+        IFS='.' read -ra VERSION <<< "$BASE_VERSION"
+        if [[ ${VERSION[2]} -lt 9 ]]; then
+          VERSION[2]=$((VERSION[2]+1))
+        else
+          VERSION[1]=$((VERSION[1]+1))
+          VERSION[2]=0
+        fi
+        NEW_VERSION="v${VERSION[0]}.${VERSION[1]}.${VERSION[2]}"
+        echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+        echo "::set-output name=new_version::$NEW_VERSION"
+
+    - name: 创建新标签
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git tag ${{ env.NEW_VERSION }}
+        git push origin ${{ env.NEW_VERSION }}
+
+    - name: 创建新的GitHub发布
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: ${{ env.NEW_VERSION }}
+        release_name: Release ${{ env.NEW_VERSION }}
         draft: false
         prerelease: false
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./app.zip
-        asset_name: app.zip
-        asset_content_type: application/zip
