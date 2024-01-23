@@ -30,27 +30,23 @@ jobs:
         else
           echo "::set-output name=exists::false"
         fi
-
-    # 上传ZIP文件到现有发布标签
-    - name: Upload ZIP to Existing Release
-      uses: actions/upload-release-asset@v1
-      if: steps.check_tag.outputs.exists == 'true'
-      env:
-        GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
-      with:
-        upload_url: https://uploads.github.com/repos/username/repo/releases/tags/v${{ steps.package_version.outputs.version }}
-        asset_path: ./app.zip
-        asset_name: app.zip
-        asset_content_type: application/zip
-
-    # 上传ZIP文件到新发布标签
-    - name: Upload ZIP to New Release
-      uses: actions/upload-release-asset@v1
+    
+    # 如果标签不存在，上传app.zip到新标签
+    - name: Create new tag
       if: steps.check_tag.outputs.exists == 'false'
-      env:
-        GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
-      with:
-        upload_url: https://uploads.github.com/repos/username/repo/releases
-        asset_path: ./app.zip
-        asset_name: app.zip
-        asset_content_type: application/zip
+      run: |
+        git config --local user.email "
+        git config --local user.name "
+        git tag v${{ steps.package_version.outputs.version }}
+        git push origin v${{ steps.package_version.outputs.version }}
+        gh release create v${{ steps.package_version.outputs.version }} app.zip --title "v${{ steps.package_version.outputs.version }}" --notes "v${{ steps.package_version.outputs.version }}"
+        
+    # 如果标签存在，上传app.zip更新标签
+    - name: Update existing tag
+      if: steps.check_tag.outputs.exists == 'true'
+      run: |
+        git config --local user.email "
+        git config --local user.name "
+        git tag -f v${{ steps.package_version.outputs.version }}
+        git push -f origin v${{ steps.package_version.outputs.version }}
+        gh release upload v${{ steps.package_version.outputs.version }} app.zip --clobber
