@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'app/**'
 
 jobs:
   package-and-release:
@@ -15,7 +13,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Zip the app folder
-      run: zip -r app.zip app/
+      run: zip -r app.zip app
 
     - name: Extract version from package.json
       run: echo "PACKAGE_VERSION=$(cat app/package.json | jq -r .version)" >> $GITHUB_ENV
