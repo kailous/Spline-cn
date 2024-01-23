@@ -1,24 +1,42 @@
-name: Release Workflow
+name: Auto Publish App
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types:
+      - created
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Check out code
+    - name: Checkout code
       uses: actions/checkout@v2
 
-    # 打包app文件夹为app.zip
-    - name: Zip the app folder
+    - name: Check release title for "update"
+      id: check_release_title
+      run: echo ::set-output name=contains_update::$(echo "${{ github.event.release.name }}" | grep -i "update" || true)
+
+    - name: Install Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: 14
+
+    - name: Get version from package.json
+      id: get_version
+      run: echo ::set-output name=version::$(node -e "console.log(require('./app/package.json').version)")
+
+    - name: Create app.zip
+      if: steps.check_release_title.outputs.contains_update == 'update'
       run: zip -r app.zip app
 
-    # 提取package.json中的版本号
-    - name: Get version from package.json
-      id: package_version
-      run: echo "::set-output name=version::$(jq -r .version app/package.json)"
-
-    
+    - name: Publish to Release
+      if: steps.check_release_title.outputs.contains_update == 'update'
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: https://uploads.github.com/repos/${{ github.repository }}/releases/${{ github.event.release.id }}/assets
+        asset_path: ./app.zip
+        asset_name: app.zip
+        asset_content_type: application/zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
