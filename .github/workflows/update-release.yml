@@ -11,10 +11,10 @@ jobs:
     steps:
     - name: Check out code
       uses: actions/checkout@v2
+
     # 打包app文件夹为app.zip
     - name: Zip the app folder
       run: zip -r app.zip app
-
 
     # 提取package.json中的版本号
     - name: Get version from package.json
@@ -31,20 +31,7 @@ jobs:
           echo "::set-output name=exists::false"
         fi
 
-    # 打包app文件夹
-    - name: Zip the app folder
-      run: zip -r app.zip app
-
-    # 如果标签不存在，创建新标签
-    - name: Create and push new tag
-      if: steps.check_tag.outputs.exists == 'false'
-      run: |
-        git config user.name github-actions
-        git config user.email github-actions@github.com
-        git tag v${{ steps.package_version.outputs.version }}
-        git push origin v${{ steps.package_version.outputs.version }}
-
-    # 如果标签不存在，创建新发布
+    # 如果标签不存在，创建新标签和发布
     - name: Create GitHub Release
       if: steps.check_tag.outputs.exists == 'false'
       id: create_release
@@ -57,12 +44,19 @@ jobs:
         draft: false
         prerelease: false
 
-    # 如果标签存在，更新现有发布
-    - name: Update GitHub Release
+    # 如果标签存在，更新现有标签
+    - name: Update Tag
       if: steps.check_tag.outputs.exists == 'true'
       run: |
-        bash .github/workflows/update-release.sh
+        # 获取新提交的SHA1哈希值，例如通过 git log 或其他方式
+        NEW_COMMIT_SHA=<新提交的SHA1>
 
+        # 更新现有标签
+        git tag -f v${{ steps.package_version.outputs.version }} $NEW_COMMIT_SHA
+
+        # 强制推送更新的标签
+        git push --force origin v${{ steps.package_version.outputs.version }}
+    
     # 上传ZIP文件到发布
     - name: Upload ZIP to Release
       uses: actions/upload-release-asset@v1
