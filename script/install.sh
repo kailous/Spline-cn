@@ -83,6 +83,11 @@ line() {
 
 # 备份函数——备份 app.asar
 backup_asar() {
+    # 判断备份文件夹是否存在
+    if [ ! -d "$Backup" ]; then
+        # 创建备份文件夹
+        mkdir "$Backup"
+    fi
     # 备份 app.asar 原始文件
     if [ -f "$SplineAppFiles/app.asar" ]; then
         # 备份 $NotionAppFiles/app.asar
@@ -102,21 +107,6 @@ backup_asar() {
             exit 1
         fi
     fi
-}
-
-# 备份函数
-backup() {
-    # 判断备份文件夹是否存在
-    if [ ! -d "$Backup" ]; then
-        # 创建备份文件夹
-        mkdir "$Backup"
-    fi
-    line
-
-    # 备份 app.asar 原始文件
-    backup_asar
-
-    line
 }
 
 # MacOS重启函数
@@ -193,7 +183,6 @@ download_file() {
 }
 
 welcome
-backup
 backup_asar
 download_url
 download_file
