@@ -31,40 +31,14 @@ jobs:
           echo "::set-output name=exists::false"
         fi
 
-    # 如果标签不存在，创建新标签和发布
-    - name: Create GitHub Release
-      if: steps.check_tag.outputs.exists == 'false'
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ steps.package_version.outputs.version }}
-        release_name: Release v${{ steps.package_version.outputs.version }}
-        draft: false
-        prerelease: false
-
-    # 如果标签存在，更新现有标签
-    - name: Update Tag
-      if: steps.check_tag.outputs.exists == 'true'
-      run: |
-        # 获取新提交的SHA1哈希值，例如通过 git log 或其他方式
-        NEW_COMMIT_SHA=<新提交的SHA1>
-
-        # 更新现有标签
-        git tag -f v${{ steps.package_version.outputs.version }} $NEW_COMMIT_SHA
-
-        # 强制推送更新的标签
-        git push --force origin v${{ steps.package_version.outputs.version }}
-    
-    # 上传ZIP文件到发布
-    - name: Upload ZIP to Release
+    # 上传ZIP文件到现有发布标签
+    - name: Upload ZIP to Existing Release
       uses: actions/upload-release-asset@v1
       if: steps.check_tag.outputs.exists == 'true'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        upload_url: https://uploads.github.com/repos/username/repo/releases/tags/v${{ steps.package_version.outputs.version }}
         asset_path: ./app.zip
         asset_name: app.zip
         asset_content_type: application/zip
