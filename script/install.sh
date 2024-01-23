@@ -54,9 +54,7 @@ welcome() {
     for line in "${patternText[@]}"; do
         echo -e "$line"
     done
-    # 提示按任意键继续
-    read -p "按任意键开始汉化，或按 Ctrl + C 退出。"
-    echo -e "\n"
+
 }
 
 # 绿色字体输出函数
