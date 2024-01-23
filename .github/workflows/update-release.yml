@@ -1,4 +1,4 @@
-name: Package and Release
+name: Conditional Package and Release
 
 on:
   push:
@@ -6,42 +6,47 @@ on:
       - main
     paths:
       - 'app/**'
-    # 使用 commit message 触发
-    # 这需要一个自定义的action或其他方法来实现消息检查
 
 jobs:
-  build-and-release:
+  package-and-release:
     runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.message, 'update')
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout Repository
+      uses: actions/checkout@v2
 
-      - name: Get version from package.json
-        id: package_version
-        run: echo "::set-output name=VERSION::$(cat app/package.json | jq -r .version)"
+    - name: Zip the app folder
+      run: zip -r app.zip app/
 
-      - name: Zip app folder
-        run: zip -r app.zip app/
+    - name: Extract version from package.json
+      run: echo "PACKAGE_VERSION=$(cat app/package.json | jq -r .version)" >> $GITHUB_ENV
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.package_version.outputs.VERSION }}
-          release_name: Release ${{ steps.package_version.outputs.VERSION }}
-          draft: false
-          prerelease: false
+    - name: Check for 'update' in commit message
+      id: check_message
+      run: |
+        if echo "${{ github.event.head_commit.message }}" | grep -q "update"; then
+          echo "UPDATE_DETECTED=true" >> $GITHUB_ENV
+        else
+          echo "UPDATE_DETECTED=false" >> $GITHUB_ENV
+        fi
 
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./app.zip
-          asset_name: app.zip
-          asset_content_type: application/zip
+    - name: Create Release
+      if: env.UPDATE_DETECTED == 'true'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+      with:
+        tag_name: ${{ env.PACKAGE_VERSION }}
+        release_name: Release ${{ env.PACKAGE_VERSION }}
+        draft: false
+        prerelease: false
+
+    - name: Upload app.zip to Release
+      if: env.UPDATE_DETECTED == 'true'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./app.zip
+        asset_name: app.zip
+        asset_content_type: application/zip
