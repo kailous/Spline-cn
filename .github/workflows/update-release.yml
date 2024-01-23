@@ -42,3 +42,15 @@ jobs:
         asset_path: ./app.zip
         asset_name: app.zip
         asset_content_type: application/zip
+
+    # 上传ZIP文件到新发布标签
+    - name: Upload ZIP to New Release
+      uses: actions/upload-release-asset@v1
+      if: steps.check_tag.outputs.exists == 'false'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: https://uploads.github.com/repos/username/repo/releases
+        asset_path: ./app.zip
+        asset_name: app.zip
+        asset_content_type: application/zip
